@@ -1,16 +1,7 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform
-} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Picker } from '@react-native-picker/picker';
 
 export default function AddTaskScreen({ navigation }) {
   const [task, setTask] = useState('');
@@ -35,34 +26,23 @@ export default function AddTaskScreen({ navigation }) {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Nouvelle tâche</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Entrez votre tâche..."
-          value={task}
-          onChangeText={setTask}
-        />
-        <TouchableOpacity style={styles.button} onPress={saveTask}>
-          <Text style={styles.buttonText}>Enregistrer</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </KeyboardAvoidingView>
+    <View style={styles.container}>
+      <Text style={styles.title}>Nouvelle tâche</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Entrez votre tâche..."
+        value={task}
+        onChangeText={setTask}
+      />
+      <TouchableOpacity style={styles.button} onPress={saveTask}>
+        <Text style={styles.buttonText}>Enregistrer</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-    paddingBottom: 40,
-    backgroundColor: '#fff',
-    flexGrow: 1,
-    justifyContent: 'center',
-  },
+  container: { flex: 1, padding: 20, justifyContent: 'center', backgroundColor: '#fff' },
   title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
   input: {
     borderColor: '#ccc',
@@ -71,6 +51,12 @@ const styles = StyleSheet.create({
     padding: 15,
     marginBottom: 20,
     fontSize: 16,
+  },
+  picker: {
+    marginBottom: 20,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 8,
   },
   button: {
     backgroundColor: '#28a745',

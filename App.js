@@ -12,7 +12,7 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Home">
-        <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Tâches' }} />
+        <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Todo" component={TodoScreen} />
         <Stack.Screen name="InProgress" component={InProgressScreen} options={{ title: 'En cours' }} />
         <Stack.Screen name="Done" component={DoneScreen} options={{ title: 'Terminées' }} />

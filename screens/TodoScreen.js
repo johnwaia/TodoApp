@@ -1,4 +1,3 @@
-// screens/TodoScreen.js
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -13,6 +12,7 @@ import { useIsFocused } from '@react-navigation/native';
 
 export default function TodoScreen({ navigation }) {
   const [tasks, setTasks] = useState([]);
+  const [selectedTasks, setSelectedTasks] = useState([]);
   const isFocused = useIsFocused();
 
   useEffect(() => {
@@ -24,64 +24,91 @@ export default function TodoScreen({ navigation }) {
     if (data) {
       const parsed = JSON.parse(data);
       setTasks(parsed.filter(task => task.status === 'ajouter'));
+      setSelectedTasks([]);
     }
   };
 
-  const updateStatus = async (taskIndexInList, newStatus) => {
+  const toggleSelectTask = (title) => {
+    setSelectedTasks(prev =>
+      prev.includes(title)
+        ? prev.filter(t => t !== title)
+        : [...prev, title]
+    );
+  };
+
+  const updateSelectedTasksStatus = async (newStatus) => {
     const data = await AsyncStorage.getItem('tasks');
     if (!data) return;
 
     let allTasks = JSON.parse(data);
-
-    // Trouve la vraie position dans la liste complète
-    const originalIndex = allTasks.findIndex(
-      task =>
-        task.title === tasks[taskIndexInList].title &&
-        task.status === 'ajouter'
+    allTasks = allTasks.map(task =>
+      selectedTasks.includes(task.title) && task.status === 'ajouter'
+        ? { ...task, status: newStatus }
+        : task
     );
 
-    if (originalIndex !== -1) {
-      allTasks[originalIndex].status = newStatus;
-      await AsyncStorage.setItem('tasks', JSON.stringify(allTasks));
-      setTasks(allTasks.filter(task => task.status === 'ajouter'));
-    }
+    await AsyncStorage.setItem('tasks', JSON.stringify(allTasks));
+    loadTasks(); 
   };
 
-  const renderItem = ({ item, index }) => (
-    <View style={styles.taskItem}>
-      <Text style={styles.taskText}>{item.title}</Text>
-      <View style={styles.buttonGroup}>
-        <TouchableOpacity
-          style={[styles.statusButton, { backgroundColor: '#007bff' }]}
-          onPress={() => updateStatus(index, 'en cours')}
-        >
-          <Text style={styles.buttonLabel}>En cours</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.statusButton, { backgroundColor: '#28a745' }]}
-          onPress={() => updateStatus(index, 'terminer')}
-        >
-          <Text style={styles.buttonLabel}>Terminer</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+  const renderItem = ({ item }) => {
+    const isSelected = selectedTasks.includes(item.title);
+    return (
+      <TouchableOpacity
+        style={[
+          styles.taskItem,
+          isSelected && { backgroundColor: '#cdeffd' },
+        ]}
+        onLongPress={() => toggleSelectTask(item.title)}
+        onPress={() => selectedTasks.length > 0 && toggleSelectTask(item.title)}
+      >
+        <Text style={styles.taskText}>{item.title}</Text>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Tâches à faire</Text>
-      <FlatList
-        data={tasks}
-        keyExtractor={(item, index) => index.toString()}
-        renderItem={renderItem}
-        contentContainerStyle={{ paddingBottom: 100 }} // <== ✅ ici l'espace sous la liste
-      />
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => navigation.navigate('AddTask')}
-      >
-        <Text style={styles.buttonText}>+ Ajouter une tâche</Text>
-      </TouchableOpacity>
+       {tasks.length === 0 ? (
+              <Text style={{ textAlign: 'center', marginTop: 40, fontSize: 16 }}>
+                Aucune tâche à faire.
+              </Text>
+            ) : (
+              <FlatList
+                data={tasks}
+                keyExtractor={(item, index) => index.toString()}
+                renderItem={renderItem}
+                contentContainerStyle={{ paddingBottom: 100 }}
+              />
+            )}
+
+      {selectedTasks.length > 0 && (
+        <View style={styles.bottomBar}>
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: '#007bff' }]}
+            onPress={() => updateSelectedTasksStatus('en cours')}
+          >
+            <Text style={styles.buttonText}>En cours</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: '#28a745' }]}
+            onPress={() => updateSelectedTasksStatus('terminer')}
+          >
+            <Text style={styles.buttonText}>Terminer</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {selectedTasks.length === 0 && (
+        <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => navigation.navigate('AddTask')}
+        >
+            <Text style={styles.buttonText}>+ Ajouter une tâche</Text>
+        </TouchableOpacity>
+      )}
+
     </View>
   );
 }
@@ -96,28 +123,14 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   taskText: { fontSize: 16 },
-  buttonGroup: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 10,
-  },
-  statusButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    marginHorizontal: 5,
-  },
-  buttonLabel: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  button: {
+
+  addButton: {
     backgroundColor: '#007AFF',
     padding: 15,
     borderRadius: 8,
     alignItems: 'center',
     position: 'absolute',
-    bottom: 50,
+    bottom: 100,
     left: 20,
     right: 20,
     elevation: 5,
@@ -129,6 +142,22 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
       },
     }),
+  },
+  bottomBar: {
+    position: 'absolute',
+    bottom: 100,
+    left: 20,
+    right: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  actionButton: {
+    flex: 1,
+    padding: 15,
+    borderRadius: 20,
+    marginHorizontal: 5,
+    alignItems: 'center',
+
   },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
 });
